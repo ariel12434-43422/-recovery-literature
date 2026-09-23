@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מאגר ספרות החלמה</title>
+<style>
+:root{
+  --bg:#f6f5f2; --surface:#ffffff; --surface-2:#efede8; --text:#1d1c1a; --muted:#6b6862;
+  --border:#e2dfd8; --accent:#2f6f62; --accent-soft:#e1efeb; --warn:#a15c07; --warn-soft:#fbefdc;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04); --radius:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141413; --surface:#1d1d1b; --surface-2:#262624; --text:#ecebe7; --muted:#9d9a93;
+  --border:#34332f; --accent:#6fbfae; --accent-soft:#1f3632; --warn:#e6a54a; --warn-soft:#3a2b16;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  --bg:#141413; --surface:#1d1d1b; --surface-2:#262624; --text:#ecebe7; --muted:#9d9a93;
+  --border:#34332f; --accent:#6fbfae; --accent-soft:#1f3632; --warn:#e6a54a; --warn-soft:#3a2b16;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Heebo","Arial Hebrew",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+
+/* header */
+header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.top{display:flex;align-items:center;gap:12px;padding:14px 0}
+.brand{display:flex;align-items:center;gap:10px;margin-inline-end:auto}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:var(--surface)}
+.brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.icon-btn{border:1px solid var(--border);background:var(--surface);border-radius:10px;height:36px;min-width:36px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.icon-btn:hover{background:var(--surface-2)}
+.searchbar{padding:0 0 14px;display:flex;gap:10px;flex-wrap:wrap}
+.search{flex:1 1 320px;position:relative}
+.search input{width:100%;height:46px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);padding:0 44px 0 40px;font-size:16px;outline:none}
+.search input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+.search svg{position:absolute;right:14px;top:14px;color:var(--muted)}
+.search kbd{position:absolute;left:10px;top:12px;font:12px ui-monospace,monospace;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 6px;background:var(--surface)}
+select{height:46px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:0 12px}
+
+/* layout */
+main{display:grid;grid-template-columns:260px 1fr;gap:24px;padding:24px 0 60px}
+@media (max-width:860px){main{grid-template-columns:1fr}aside{display:none}aside.open{display:block}}
+aside{position:sticky;top:140px;align-self:start;max-height:calc(100vh - 160px);overflow:auto}
+.side-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px;font-weight:600}
+.cats{list-style:none;margin:0;padding:0}
+.cats li button{width:100%;text-align:start;border:0;background:none;padding:7px 10px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.cats li button:hover{background:var(--surface-2)}
+.cats li button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.cats .count{margin-inline-start:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cats .active .count{color:var(--accent)}
+.cats .caret{width:14px;flex:none;opacity:.6;transition:transform .15s}
+.cats .caret.open{transform:rotate(-90deg)}
+.cats ul{list-style:none;margin:0;padding:0 16px 0 0}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.resbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;color:var(--muted);font-size:14px}
+.resbar .crumbs{color:var(--text);font-weight:600}
+.resbar .spacer{margin-inline-start:auto}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.grid.list{grid-template-columns:1fr;gap:8px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.grid.list .card{flex-direction:row;align-items:center;padding:12px 14px}
+.ftype{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:11px;font-weight:700;letter-spacing:.03em;flex:none}
+.card h3{margin:0;font-size:15px;font-weight:600;line-height:1.35;word-break:break-word}
+.card h3 mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
+.meta{font-size:12.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.meta .cat{background:var(--surface-2);border-radius:6px;padding:1px 7px}
+.desc{font-size:13.5px;color:var(--muted);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.actions{display:flex;gap:8px;margin-top:auto}
+.grid.list .actions{margin:0}
+.btn{flex:1;display:inline-flex;justify-content:center;align-items:center;gap:6px;height:36px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text);font-size:13.5px;font-weight:500;background:var(--surface);white-space:nowrap;padding:0 12px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.lock{color:var(--warn);font-size:12px}
+
+/* empty / loader */
+.panel{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:40px 24px;text-align:center;max-width:620px;margin:40px auto}
+.panel h2{margin:0 0 8px;font-size:20px}
+.panel p{color:var(--muted);margin:0 0 18px}
+.drop{border:2px dashed var(--border);border-radius:12px;padding:28px;cursor:pointer;transition:.15s}
+.drop.over,.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+.err{color:var(--warn);font-size:14px;margin-top:12px}
+.notice{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+.hidden{display:none!important}
+footer{color:var(--muted);font-size:12.5px;text-align:center;padding:0 0 30px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2 2 0 0 0 6 21.5h13"/></svg>
+        </div>
+        <div><h1>מאגר ספרות החלמה</h1><small id="subtitle">טוען…</small></div>
+      </div>
+      <button class="icon-btn" id="catToggle" title="קטגוריות" aria-label="קטגוריות">☰</button>
+      <button class="icon-btn" id="viewToggle" title="תצוגת רשימה/רשת" aria-label="החלפת תצוגה">▦</button>
+      <button class="icon-btn" id="themeToggle" title="מצב כהה/בהיר" aria-label="מצב כהה/בהיר">◐</button>
+    </div>
+    <div class="searchbar" id="searchbar">
+      <label class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="חיפוש לפי שם, קטגוריה או תיאור…" autocomplete="off" aria-label="חיפוש">
+        <kbd>/</kbd>
+      </label>
+      <select id="sort" aria-label="מיון">
+        <option value="name">מיון: שם</option>
+        <option value="updated">מיון: עודכן לאחרונה</option>
+        <option value="category">מיון: קטגוריה</option>
+        <option value="size">מיון: גודל</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- loader: shown when data.json can't be fetched (e.g. opened as a local file) -->
+  <section class="panel hidden" id="loader">
+    <h2>טעינת קובץ המאגר</h2>
+    <p>גררו לכאן את קובץ ה-JSON שהופק מ-Google Drive, או לחצו לבחירה.</p>
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept=".json,application/json" hidden>
+      <strong>📄 בחירת קובץ JSON</strong>
+    </label>
+    <div class="err" id="err"></div>
+  </section>
+
+  <main id="app" class="hidden">
+    <aside id="side">
+      <p class="side-title">קטגוריות</p>
+      <ul class="cats" id="cats"></ul>
+    </aside>
+    <section>
+      <div class="notice hidden" id="notice"></div>
+      <div class="chips" id="types"></div>
+      <div class="resbar"><span class="crumbs" id="crumbs">כל הספרות</span><span id="count"></span></div>
+      <div class="grid" id="grid"></div>
+      <div class="panel hidden" id="empty"><h2>לא נמצאו תוצאות</h2><p>נסו מילת חיפוש אחרת או קטגוריה אחרת.</p></div>
+    </section>
+  </main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+(() => {
+  const TYPES = {
+    pdf:{label:'PDF',   bg:'#fde6e4', fg:'#b3261e'},
+    doc:{label:'מסמך',  bg:'#e3ecfd', fg:'#1f5bc4'},
+    sheet:{label:'גיליון',bg:'#e2f4e6', fg:'#1e7b3a'},
+    slides:{label:'מצגת',bg:'#fdf0d8', fg:'#a15c07'},
+    image:{label:'תמונה',bg:'#efe6fb', fg:'#6b3fb5'},
+    audio:{label:'שמע', bg:'#e0f4f6', fg:'#0d7280'},
+    video:{label:'וידאו',bg:'#fbe4f0', fg:'#a2296a'},
+    archive:{label:'ארכיון',bg:'#ecebe7',fg:'#5a5853'},
+    other:{label:'קובץ',bg:'#ecebe7', fg:'#5a5853'}
+  };
+  const $ = s => document.querySelector(s);
+  const state = { files:[], cats:[], q:'', cat:null, type:null, sort:'name', open:new Set(), list:false };
+
+  // ── prefs (best effort) ──
+  const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
+  const theme = store.get('rl-theme'); if (theme) document.documentElement.dataset.theme = theme;
+  state.list = store.get('rl-view') === 'list';
+
+  // ── Hebrew-aware normalisation: strip niqqud, unify final letters, lowercase ──
+  const FINALS = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
+  const norm = s => (s||'').toLowerCase()
+      .replace(/[֑-ׇ]/g,'')
+      .replace(/[ךםןףץ]/g, c => FINALS[c])
+      .replace(/[_\-.\/״"׳']/g,' ')
+      .replace(/\s+/g,' ').trim();
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ── load ──
+  const params = new URLSearchParams(location.search);
+  const src = params.get('data') || 'data.json';
+  fetch(src, {cache:'no-store'})
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => showLoader());
+
+  function showLoader(msg){
+    $('#loader').classList.remove('hidden');
+    $('#searchbar').classList.add('hidden');
+    $('#subtitle').textContent = 'ממתין לקובץ נתונים';
+    if (msg) $('#err').textContent = msg;
+  }
+  const drop = $('#drop');
+  $('#file').addEventListener('change', e => readFile(e.target.files[0]));
+  ['dragover','dragenter'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  document.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+  function readFile(f){
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { init(JSON.parse(r.result)); } catch(e){ showLoader('הקובץ אינו JSON תקין.'); } };
+    r.readAsText(f, 'UTF-8');
+  }
+
+  function init(data){
+    if (!data || !Array.isArray(data.files)) return showLoader('מבנה הקובץ לא מוכר — חסר שדה files.');
+    const JUNK = /^(\.DS_Store|Icon\r?|desktop\.ini|Thumbs\.db|\[Content_Types\].*|~\$.*)$|\.(xml|rels|css)$/i;  // קבצי מערכת ושרידי קבצי Office מפורקים
+    state.files = data.files.filter(f => f && f.name && !JUNK.test(f.name)).map(f => {
+      const dot = f.name.lastIndexOf('.');
+      const ext = f.ext || (dot > 0 ? f.name.slice(dot + 1).toLowerCase() : '');
+      const type = TYPES[f.type] ? f.type : typeOf(f.mimeType || '', ext);
+      return {
+        ...f, ext, type,
+        path: Array.isArray(f.path) ? f.path : [],
+        updated: f.updated || f.updatedAt || '',
+        _n: norm([f.name, (f.path||[]).join(' '), f.description].join(' '))
+      };
+    });
+    state.cats = buildTree(state.files);
+    const priv = state.files.filter(f => f.shared === false).length;
+    state.mostlyPrivate = priv > state.files.length / 2;
+    if (state.mostlyPrivate) { const n = $('#notice'); n.textContent = `🔒 ${priv} מתוך ${state.files.length} הקבצים אינם משותפים לציבור ב-Drive, ולכן רק מי שיש לו גישה לתיקייה יוכל לפתוח אותם.`; n.classList.remove('hidden'); }
+    $('#loader').classList.add('hidden');
+    $('#searchbar').classList.remove('hidden');
+    $('#app').classList.remove('hidden');
+    const d = data.generatedAt ? new Date(data.generatedAt) : null;
+    $('#subtitle').textContent = `${state.files.length} פריטים · ${countCats(state.cats)} קטגוריות`;
+    $('#foot').textContent = d ? `הנתונים עודכנו ב-${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}` : '';
+    readHash();
+    render();
+  }
+
+  function typeOf(mime, ext){
+    const m = mime + ' ' + ext;
+    if (/pdf/.test(m)) return 'pdf';
+    if (/google-apps\.document|wordprocessingml|msword|rtf|text\/plain|\b(docx?|odt|txt|pages)\b/.test(m)) return 'doc';
+    if (/google-apps\.spreadsheet|spreadsheetml|ms-excel|csv|\b(xlsx?|numbers)\b/.test(m)) return 'sheet';
+    if (/google-apps\.presentation|presentationml|ms-powerpoint|\b(pptx?|key)\b/.test(m)) return 'slides';
+    if (/^image\//.test(mime) || /\b(jpe?g|png|gif|heic|webp)\b/.test(ext)) return 'image';
+    if (/^audio\//.test(mime) || /\b(mp3|m4a|wav|ogg)\b/.test(ext)) return 'audio';
+    if (/^video\//.test(mime) || /\b(mp4|mov|avi|mkv)\b/.test(ext)) return 'video';
+    if (/zip|rar|7z|tar|gzip/.test(m)) return 'archive';
+    return 'other';
+  }
+
+  // category tree built from file paths (works even if data.categories is missing)
+  function buildTree(files){
+    const root = {children:new Map()};
+    files.forEach(f => {
+      let node = root, acc = [];
+      f.path.forEach(part => {
+        acc = acc.concat(part);
+        if (!node.children.has(part)) node.children.set(part, {name:part, key:acc.join('/'), children:new Map(), count:0});
+        node = node.children.get(part);
+        node.count++;
+      });
+    });
+    const toArr = m => [...m.values()].sort((a,b)=>a.name.localeCompare(b.name,'he')).map(n => ({...n, children:toArr(n.children)}));
+    return toArr(root.children);
+  }
+  const countCats = arr => arr.reduce((s,n)=>s+1+countCats(n.children),0);
+
+  // ── routing via hash (shareable links) ──
+  function writeHash(){
+    const p = new URLSearchParams();
+    if (state.q) p.set('q', state.q);
+    if (state.cat) p.set('c', state.cat);
+    if (state.type) p.set('t', state.type);
+    const h = p.toString();
+    history.replaceState(null, '', h ? '#'+h : location.pathname + location.search);
+  }
+  function readHash(){
+    const p = new URLSearchParams(location.hash.slice(1));
+    state.q = p.get('q') || ''; state.cat = p.get('c'); state.type = p.get('t');
+    $('#q').value = state.q;
+    if (state.cat) { const parts = state.cat.split('/'); parts.forEach((_,i)=>state.open.add(parts.slice(0,i+1).join('/'))); }
+  }
+
+  // ── filtering ──
+  function filtered(opts={}){
+    const terms = norm(state.q).split(' ').filter(Boolean);
+    return state.files.filter(f =>
+      (!state.cat || f.path.join('/') === state.cat || f.path.join('/').startsWith(state.cat + '/')) &&
+      (opts.ignoreType || !state.type || f.type === state.type) &&
+      terms.every(t => f._n.includes(t))
+    );
+  }
+  const sortKey = n => n.replace(/^[\s,.\-–_\u200e\u200f\u2066-\u2069]+/, '');
+  function sorted(list){
+    const by = {
+      name:(a,b)=>sortKey(a.name).localeCompare(sortKey(b.name),'he',{numeric:true}),
+      updated:(a,b)=>(b.updated||'').localeCompare(a.updated||''),
+      category:(a,b)=>a.path.join('/').localeCompare(b.path.join('/'),'he') || a.name.localeCompare(b.name,'he',{numeric:true}),
+      size:(a,b)=>(b.size||0)-(a.size||0)
+    }[state.sort];
+    return list.slice().sort(by);
+  }
+
+  // ── render ──
+  function render(){
+    renderCats(); renderTypes();
+    const items = sorted(filtered());
+    $('#crumbs').textContent = state.cat ? state.cat.split('/').join(' › ') : 'כל הספרות';
+    $('#count').textContent = `· ${items.length} תוצאות`;
+    $('#empty').classList.toggle('hidden', items.length > 0);
+    const grid = $('#grid');
+    grid.classList.toggle('list', state.list);
+    grid.innerHTML = items.slice(0, 600).map(card).join('');
+    writeHash();
+  }
+
+  function renderCats(){
+    const li = (n) => {
+      const hasKids = n.children.length > 0, open = state.open.has(n.key);
+      return `<li><button data-cat="${esc(n.key)}" class="${state.cat===n.key?'active':''}">
+        <svg class="caret ${open?'open':''}" ${hasKids?'':'style="visibility:hidden"'} data-toggle="${esc(n.key)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+        <span>${esc(n.name)}</span><span class="count">${n.count}</span></button>
+        ${hasKids && open ? `<ul>${n.children.map(li).join('')}</ul>` : ''}</li>`;
+    };
+    $('#cats').innerHTML =
+      `<li><button data-cat="" class="${!state.cat?'active':''}"><svg class="caret" style="visibility:hidden" viewBox="0 0 24 24"></svg><span>הכול</span><span class="count">${state.files.length}</span></button></li>` +
+      state.cats.map(li).join('');
+  }
+
+  function renderTypes(){
+    const base = filtered({ignoreType:true});
+    const counts = {};
+    base.forEach(f => counts[f.type] = (counts[f.type]||0)+1);
+    const present = Object.keys(TYPES).filter(t => counts[t]);
+    $('#types').innerHTML = present.length < 2 && !state.type ? '' :
+      `<button class="chip ${!state.type?'active':''}" data-type="">כל הסוגים</button>` +
+      present.map(t => `<button class="chip ${state.type===t?'active':''}" data-type="${t}">${TYPES[t].label} · ${counts[t]}</button>`).join('');
+  }
+
+  function highlight(name){
+    let out = esc(name);
+    const terms = state.q.trim().split(/\s+/).filter(t => t.length > 1);
+    terms.forEach(t => {
+      const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
+      out = out.replace(re, m => `<mark>${m}</mark>`);
+    });
+    return out;
+  }
+  const fmtSize = b => !b ? '' : b < 1024*1024 ? Math.max(1,Math.round(b/1024))+' KB' : (b/1024/1024).toFixed(1)+' MB';
+  const fmtDate = s => s ? new Date(s).toLocaleDateString('he-IL') : '';
+
+  function card(f){
+    const t = TYPES[f.type];
+    const label = f.ext ? f.ext.toUpperCase().slice(0,4) : t.label;
+    const meta = [
+      f.path.length ? `<span class="cat">${esc(f.path.join(' › '))}</span>` : '',
+      fmtSize(f.size), fmtDate(f.updated)
+    ].filter(Boolean).join(' <span aria-hidden="true">·</span> ');
+    return `<article class="card">
+      <div class="ftype" style="background:${t.bg};color:${t.fg}">${esc(label)}</div>
+      <div class="body">
+        <h3 title="${esc(f.name)}">${highlight(f.ext ? f.name.replace(new RegExp('\\.' + f.ext + '$', 'i'), '') : f.name)}</h3>
+        <div class="meta">${meta}</div>
+        ${f.description ? `<p class="desc">${esc(f.description)}</p>` : ''}
+        ${f.shared === false && !state.mostlyPrivate ? `<span class="lock">🔒 הקובץ אינו משותף לציבור</span>` : ''}
+      </div>
+      <div class="actions">
+        ${f.viewUrl ? `<a class="btn primary" href="${esc(f.viewUrl)}" target="_blank" rel="noopener">צפייה</a>` : ''}
+        ${f.downloadUrl ? `<a class="btn" href="${esc(f.downloadUrl)}" target="_blank" rel="noopener">הורדה ↓</a>` : ''}
+      </div>
+    </article>`;
+  }
+
+  // ── events ──
+  let t;
+  $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; render(); }, 120); });
+  $('#sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+  $('#cats').addEventListener('click', e => {
+    const tog = e.target.closest('[data-toggle]');
+    const btn = e.target.closest('[data-cat]');
+    if (!btn) return;
+    const key = btn.dataset.cat || null;
+    if (tog) { state.open.has(key) ? state.open.delete(key) : state.open.add(key); renderCats(); return; }
+    state.cat = key; if (key) state.open.add(key);
+    render();
+    if (innerWidth <= 860) $('#side').classList.remove('open');
+  });
+  $('#types').addEventListener('click', e => { const b = e.target.closest('[data-type]'); if (!b) return; state.type = b.dataset.type || null; render(); });
+  $('#viewToggle').addEventListener('click', () => { state.list = !state.list; store.set('rl-view', state.list?'list':'grid'); render(); });
+  $('#catToggle').addEventListener('click', () => $('#side').classList.toggle('open'));
+  $('#themeToggle').addEventListener('click', () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next; store.set('rl-theme', next);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+    if (e.key === 'Escape' && document.activeElement === $('#q')) { $('#q').value=''; state.q=''; render(); }
+  });
+})();
+</script>
+</body>
+</html>
