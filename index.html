@@ -186,6 +186,23 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .lock{color:var(--danger);font-size:12px}
 .folder-hits{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 
+/* ── anonymous usage stats (no names, no IPs, no cookies) ── */
+let current_file = null, lastSearch = '', ts;
+function track(ev, data={}){
+  if (!LIVE_DATA_URL) return;
+  try{
+    const body = JSON.stringify(Object.assign({ev}, data));
+    if (navigator.sendBeacon && navigator.sendBeacon(LIVE_DATA_URL, new Blob([body],{type:'text/plain'}))) return;
+    fetch(LIVE_DATA_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain'},body});
+  }catch(_){}
+}
+function fileInfo(f){ return {id:f.id, name:f.name, folder:f.path.join(' / ')}; }
+function trackSearchSoon(now){
+  clearTimeout(ts);
+  const fire = ()=>{ const q = S.q.trim(); if (q.length<2 || q===lastSearch) return; lastSearch = q; track('search',{q, results: current().items.length, folder: S.folder}); };
+  now ? fire() : (ts = setTimeout(fire, 1500));
+}
+
 /* ── preview panel ──────────────────────────────────── */
 .scrim{position:fixed;inset:0;background:rgba(10,20,22,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
 .scrim.on{opacity:1;pointer-events:auto}
@@ -611,8 +628,8 @@ function row(f,toks,rel){
     <div style="min-width:0"><div class="nm">${highlight(f.name,toks)}</div>
       <div class="meta">${rel.length?`<span class="path">${highlight(rel.join(' / '),toks)}</span>`:''}${f.updated?`<span>${fmtDate(f.updated)}</span>`:''}${f.size?`<span>${fmtSize(f.size)}</span>`:''}${f.locked?'<span class="lock">לא משותף</span>':''}</div></div>
     <div class="acts">
-      <a href="${esc(f.viewUrl)}" target="_blank" rel="noopener" aria-label="פתיחה בדרייב" title="פתיחה בדרייב" data-stop><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
-      <a href="${esc(f.downloadUrl)}" target="_blank" rel="noopener" aria-label="הורדה" title="הורדה" data-stop><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg></a>
+      <a href="${esc(f.viewUrl)}" target="_blank" rel="noopener" aria-label="פתיחה בדרייב" title="פתיחה בדרייב" data-stop data-act="open"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+      <a href="${esc(f.downloadUrl)}" target="_blank" rel="noopener" aria-label="הורדה" title="הורדה" data-stop data-act="download"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg></a>
     </div></div>`;
 }
 
@@ -637,6 +654,7 @@ function openFile(id){
   const panel = $('#panel'); panel.hidden = false;
   requestAnimationFrame(()=>{ panel.classList.add('on'); $('#scrim').classList.add('on'); $('#pClose').focus(); });
   setHash({file:id}, true);
+  current_file = f; track('view', fileInfo(f));
 }
 function closePanel(){
   const p = $('#panel'); if (p.hidden) return;
@@ -666,6 +684,7 @@ function setHash(extra={}, replace=false){
 }
 function go(changes, scroll=true){
   Object.assign(S, changes, {shown:PAGE});
+  if (changes.folder) track('folder',{folder: changes.folder.split('/').join(' / ')});
   setHash({file:null});
   if ('folder' in changes) renderTree();
   render();
@@ -677,9 +696,9 @@ function go(changes, scroll=true){
 let tq;
 $('#q').addEventListener('input', e=>{
   $('#searchBox').classList.toggle('has', !!e.target.value);
-  clearTimeout(tq); tq = setTimeout(()=>{ S.q = e.target.value.trim(); S.shown = PAGE; if (S.q && S.sort!=='rel') S.sort='rel'; setHash({file:null},true); render(); }, 90);
+  clearTimeout(tq); tq = setTimeout(()=>{ S.q = e.target.value.trim(); S.shown = PAGE; if (S.q && S.sort!=='rel') S.sort='rel'; setHash({file:null},true); render(); trackSearchSoon(); }, 90);
 });
-$('#q').addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); document.querySelector('.main').scrollIntoView({behavior:'smooth'}); } });
+$('#q').addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); trackSearchSoon(true); document.querySelector('.main').scrollIntoView({behavior:'smooth'}); } });
 $('#clear').addEventListener('click', ()=>{ $('#q').value=''; $('#searchBox').classList.remove('has'); go({q:''},false); $('#q').focus(); });
 document.addEventListener('click', e=>{
   const k = e.target.closest('[data-k]');
@@ -688,6 +707,8 @@ document.addEventListener('click', e=>{
   if (tg){ const key = tg.dataset.tog; OPEN.has(key)?OPEN.delete(key):OPEN.add(key); renderTree(); const b=document.querySelector(`[data-tog="${CSS.escape(key)}"]`); b&&b.focus(); return; }
   const ty = e.target.closest('[data-type]'); if (ty){ go({type:ty.dataset.type}, false); return; }
   const vw = e.target.closest('[data-view]'); if (vw){ S.view = vw.dataset.view; try{localStorage.setItem('rl-view',S.view)}catch(_){} render(); return; }
+  const act = e.target.closest('[data-act]');
+  if (act){ const r = act.closest('[data-id]'); const f = r && DB.files.find(x=>x.id===r.dataset.id); if (f) track(act.dataset.act, fileInfo(f)); return; }
   if (e.target.closest('[data-stop]')) return;
   const fid = e.target.closest('[data-id]'); if (fid){ openFile(fid.dataset.id); return; }
   if (e.target.id==='widen'){ go({folder:'',type:''}, false); }
@@ -700,6 +721,8 @@ document.addEventListener('keydown', e=>{
 $('#sort').addEventListener('change', e=>go({sort:e.target.value}, false));
 $('#more').addEventListener('click', ()=>{ S.shown += PAGE; render(); });
 $('#pClose').addEventListener('click', closePanel);
+$('#pOpen').addEventListener('click', ()=>{ current_file && track('open', fileInfo(current_file)); });
+$('#pDown').addEventListener('click', ()=>{ current_file && track('download', fileInfo(current_file)); });
 $('#scrim').addEventListener('click', ()=>{ closePanel(); $('#tree').classList.remove('on'); $('#scrim').classList.remove('on'); });
 $('#openTree').addEventListener('click', ()=>{ $('#tree').classList.add('on'); $('#scrim').classList.add('on'); });
 $('#pCopy').addEventListener('click', async e=>{
@@ -737,7 +760,12 @@ function bindContent(){
   $('#openTree').addEventListener('click', ()=>{ $('#tree').classList.add('on'); $('#scrim').classList.add('on'); });
 }
 
-load().then(()=>{ if (DB && fileFromHash) openFile(fileFromHash); });
+load().then(()=>{
+  if (!DB) return;
+  let first = true; try{ first = !sessionStorage.getItem('rl-visit'); sessionStorage.setItem('rl-visit','1'); }catch(_){}
+  if (first) track('visit');
+  if (fileFromHash) openFile(fileFromHash);
+});
 </script>
 </body>
 </html>
