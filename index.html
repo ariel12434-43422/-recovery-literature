@@ -47,6 +47,7 @@
 /* ── base ───────────────────────────────────────────── */
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input,select{font:inherit;color:inherit}
@@ -185,23 +186,6 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .empty b{display:block;font:700 24px/1.2 var(--serif);color:var(--ink);margin-bottom:8px}
 .lock{color:var(--danger);font-size:12px}
 .folder-hits{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-
-/* ── anonymous usage stats (no names, no IPs, no cookies) ── */
-let current_file = null, lastSearch = '', ts;
-function track(ev, data={}){
-  if (!LIVE_DATA_URL) return;
-  try{
-    const body = JSON.stringify(Object.assign({ev}, data));
-    if (navigator.sendBeacon && navigator.sendBeacon(LIVE_DATA_URL, new Blob([body],{type:'text/plain'}))) return;
-    fetch(LIVE_DATA_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain'},body});
-  }catch(_){}
-}
-function fileInfo(f){ return {id:f.id, name:f.name, folder:f.path.join(' / ')}; }
-function trackSearchSoon(now){
-  clearTimeout(ts);
-  const fire = ()=>{ const q = S.q.trim(); if (q.length<2 || q===lastSearch) return; lastSearch = q; track('search',{q, results: current().items.length, folder: S.folder}); };
-  now ? fire() : (ts = setTimeout(fire, 1500));
-}
 
 /* ── preview panel ──────────────────────────────────── */
 .scrim{position:fixed;inset:0;background:rgba(10,20,22,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
@@ -641,6 +625,23 @@ function renderSuggest(){
   $('#suggest').innerHTML = `<span>מבט מהיר:</span>` + picks.map(f=>`<button data-k="${esc(f.key)}">${esc(f.name)}</button>`).join('');
 }
 
+/* ── anonymous usage stats (no names, no IPs, no cookies) ── */
+let current_file = null, lastSearch = '', ts;
+function track(ev, data={}){
+  if (!LIVE_DATA_URL) return;
+  try{
+    const body = JSON.stringify(Object.assign({ev}, data));
+    if (navigator.sendBeacon && navigator.sendBeacon(LIVE_DATA_URL, new Blob([body],{type:'text/plain'}))) return;
+    fetch(LIVE_DATA_URL,{method:'POST',mode:'no-cors',keepalive:true,headers:{'Content-Type':'text/plain'},body});
+  }catch(_){}
+}
+function fileInfo(f){ return {id:f.id, name:f.name, folder:f.path.join(' / ')}; }
+function trackSearchSoon(now){
+  clearTimeout(ts);
+  const fire = ()=>{ const q = S.q.trim(); if (q.length<2 || q===lastSearch) return; lastSearch = q; track('search',{q, results: current().items.length, folder: S.folder}); };
+  now ? fire() : (ts = setTimeout(fire, 1500));
+}
+
 /* ── preview panel ───────────────────────────────────── */
 let lastFocus = null;
 function openFile(id){
@@ -696,7 +697,7 @@ function go(changes, scroll=true){
 let tq;
 $('#q').addEventListener('input', e=>{
   $('#searchBox').classList.toggle('has', !!e.target.value);
-  clearTimeout(tq); tq = setTimeout(()=>{ S.q = e.target.value.trim(); S.shown = PAGE; if (S.q && S.sort!=='rel') S.sort='rel'; setHash({file:null},true); render(); trackSearchSoon(); }, 90);
+  clearTimeout(tq); tq = setTimeout(()=>{ if (!S.q && e.target.value.trim() && S.folder){ S.folder=''; renderTree(); } S.q = e.target.value.trim(); S.shown = PAGE; if (S.q && S.sort!=='rel') S.sort='rel'; setHash({file:null},true); render(); trackSearchSoon(); }, 90);
 });
 $('#q').addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); trackSearchSoon(true); document.querySelector('.main').scrollIntoView({behavior:'smooth'}); } });
 $('#clear').addEventListener('click', ()=>{ $('#q').value=''; $('#searchBox').classList.remove('has'); go({q:''},false); $('#q').focus(); });
